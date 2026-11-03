@@ -70,21 +70,33 @@ jobs:
                 -print | sort
             )
 
-            if [ "${#ZIP_FILES[@]}" -ne 1 ]; then
-              echo "ERROR: Expected exactly one Android ZIP."
-              echo "Found: ${#ZIP_FILES[@]}"
+            VERSIONED_ZIPS=()
+            mapfile -t VERSIONED_ZIPS < <(
+              find . \
+                -path './.git' -prune -o \
+                -type f -iname '*-v1.4.zip' \
+                -print | sort
+            )
+
+            if [ "${#VERSIONED_ZIPS[@]}" -eq 1 ]; then
+              ZIP_TO_USE="${VERSIONED_ZIPS[0]}"
+            elif [ "${#ZIP_FILES[@]}" -eq 1 ]; then
+              ZIP_TO_USE="${ZIP_FILES[0]}"
+            else
+              echo "ERROR: Could not identify the correct Android ZIP."
               printf '%s\n' "${ZIP_FILES[@]}"
               exit 1
             fi
 
             mkdir -p "$GITHUB_WORKSPACE/extracted"
 
-            echo "Extracting: ${ZIP_FILES[0]}"
+            echo "Extracting: $ZIP_TO_USE"
 
-            unzip -q "${ZIP_FILES[0]}" \
+            unzip -q "$ZIP_TO_USE" \
               -d "$GITHUB_WORKSPACE/extracted"
 
             SOURCE_DIR="$GITHUB_WORKSPACE/extracted"
+
           fi
 
           SETTINGS_FILE=$(find "$SOURCE_DIR" \
@@ -94,6 +106,11 @@ jobs:
             -print -quit)
 
           if [ -n "$SETTINGS_FILE" ]; then
+
+          
+            
+
+          
             PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           else
             APP_FILE=$(find "$SOURCE_DIR" \
