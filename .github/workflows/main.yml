@@ -1,3 +1,4 @@
+
 name: Build Sobhati APK
 
 on:
@@ -5,6 +6,9 @@ on:
   push:
     branches:
       - main
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -20,7 +24,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Gradle 8.7
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
@@ -29,52 +33,128 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install Android SDK packages
+        shell: bash
         run: |
           yes | sdkmanager --licenses || true
-          sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Extract Android project
+          sdkmanager --install \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
+
+      - name: Find and prepare Android project
+        id: locate
+        shell: bash
         run: |
-          mkdir -p project
+          set -euo pipefail
 
-          ZIP_FILE=$(find . -maxdepth 2 -type f -iname "*.zip" | head -n 1)
+          SOURCE_DIR=""
 
-          if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: Android project ZIP file not found."
-            exit 1
+          SETTINGS_FILE=$(find . \
+            -path './.git' -prune -o \
+            -type f \
+            \( -name settings.gradle \
+            -o -name settings.gradle.kts \) \
+            -print -quit)
+
+          if [ -n "$SETTINGS_FILE" ]; then
+            SOURCE_DIR="."
+            echo "Android project already exists."
+          else
+            mapfile -t ZIP_FILES < <(
+              find . \
+                -path './.git' -prune -o \
+                -type f -iname '*.zip' \
+                -print | sort
+            )
+
+            if [ "${#ZIP_FILES[@]}" -ne 1 ]; then
+              echo "ERROR: Expected exactly one Android ZIP."
+              echo "Found: ${#ZIP_FILES[@]}"
+              printf '%s\n' "${ZIP_FILES[@]}"
+              exit 1
+            fi
+
+            mkdir -p "$GITHUB_WORKSPACE/extracted"
+
+            echo "Extracting: ${ZIP_FILES[0]}"
+
+            unzip -q "${ZIP_FILES[0]}" \
+              -d "$GITHUB_WORKSPACE/extracted"
+
+            SOURCE_DIR="$GITHUB_WORKSPACE/extracted"
           fi
 
-          echo "Extracting: $ZIP_FILE"
-          unzip -o "$ZIP_FILE" -d project
+          SETTINGS_FILE=$(find "$SOURCE_DIR" \
+            -type f \
+            \( -name settings.gradle \
+            -o -name settings.gradle.kts \) \
+            -print -quit)
 
-      - name: Find Android project
-        run: |
-          SETTINGS_FILE=$(find project -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) | head -n 1)
+          if [ -n "$SETTINGS_FILE" ]; then
+            PROJECT_DIR=$(dirname "$SETTINGS_FILE")
+          else
+            APP_FILE=$(find "$SOURCE_DIR" \
+              -type f \
+              \( -path '*/app/build.gradle' \
+              -o -path '*/app/build.gradle.kts' \) \
+              -print -quit)
 
-          if [ -z "$SETTINGS_FILE" ]; then
-            echo "ERROR: settings.gradle not found."
-            exit 1
+            if [ -z "$APP_FILE" ]; then
+              echo "ERROR: Android Gradle project not found."
+              exit 1
+            fi
+
+            PROJECT_DIR=$(dirname "$(dirname "$APP_FILE")")
           fi
 
-          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-          echo "Android project found at: $PROJECT_DIR"
+          echo "Android project found: $PROJECT_DIR"
 
       - name: Build Debug APK
+        shell: bash
         run: |
+          set -euo pipefail
+
           cd "$PROJECT_DIR"
 
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
-            ./gradlew assembleDebug
+            ./gradlew --no-daemon assembleDebug
           else
-            gradle assembleDebug
+            gradle --no-daemon assembleDebug
           fi
 
-      - name: Upload APK
+          mapfile -t APK_FILES < <(
+            find "$PROJECT_DIR" \
+              -type f \
+              -path '*/build/outputs/apk/*' \
+              -name '*.apk' \
+              ! -iname '*androidtest*' \
+              ! -path '*/androidTest/*' \
+              | grep '/debug/' \
+              | sort || true
+          )
+
+          if [ "${#APK_FILES[@]}" -eq 0 ]; then
+            echo "ERROR: No Debug APK found."
+            exit 1
+          fi
+
+          mkdir -p "$GITHUB_WORKSPACE/output"
+
+          cp "${APK_FILES[0]}" \
+            "$GITHUB_WORKSPACE/output/Sobhati-debug.apk"
+
+          test -s "$GITHUB_WORKSPACE/output/Sobhati-debug.apk"
+
+          echo "APK generated successfully."
+
+      - name: Upload Sobhati APK
         uses: actions/upload-artifact@v4
         with:
           name: Sobhati-APK
-          path: project/**/app/build/outputs/apk/debug/*.apk
+          path: output/Sobhati-debug.apk
           if-no-files-found: error
+          retention-days: 7
