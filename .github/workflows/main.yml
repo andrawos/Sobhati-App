@@ -74,7 +74,7 @@ jobs:
             mapfile -t VERSIONED_ZIPS < <(
               find . \
                 -path './.git' -prune -o \
-                -type f -iname '*-v1.4.zip' \
+                -type f -iname '*-v1.5.zip' \
                 -print | sort
             )
 
