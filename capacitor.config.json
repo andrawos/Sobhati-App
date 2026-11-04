@@ -1,0 +1,8 @@
+{
+  "appId": "com.andrawos.sobhati",
+  "appName": "سبحتي",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
