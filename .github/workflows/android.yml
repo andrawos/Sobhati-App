@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - name: Install Android SDK packages
         run: |
           SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
@@ -41,14 +41,20 @@ jobs:
       - name: Add location permissions
         run: |
           python3 - <<'PY'
+          import xml.etree.ElementTree as ET
           from pathlib import Path
-          p=Path('android/app/src/main/AndroidManifest.xml')
-          s=p.read_text()
-          pos=s.find('>', s.find('<manifest'))
-          permissions='\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />'
-          if 'android.permission.ACCESS_FINE_LOCATION' not in s:
-              s=s[:pos+1]+permissions+s[pos+1:]
-          p.write_text(s)
+          p = Path('android/app/src/main/AndroidManifest.xml')
+          tree = ET.parse(p)
+          root = tree.getroot()
+          android = '{http://schemas.android.com/apk/res/android}'
+          existing = {node.get(android + 'name') for node in root.findall('uses-permission')}
+          for permission in (
+              'android.permission.ACCESS_FINE_LOCATION',
+              'android.permission.ACCESS_COARSE_LOCATION',
+          ):
+              if permission not in existing:
+                  ET.SubElement(root, 'uses-permission', {android + 'name': permission})
+          tree.write(p, encoding='utf-8', xml_declaration=True)
           PY
       - name: Build debug APK
         run: |
