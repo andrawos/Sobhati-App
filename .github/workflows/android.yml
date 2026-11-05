@@ -50,6 +50,38 @@ jobs:
         run: npx cap add android
       - name: Sync web app
         run: npx cap sync android
+      - name: Apply approved launcher icon
+        run: |
+          python3 - <<'PY'
+          import base64, re
+          from pathlib import Path
+          svg = Path('www/icon.svg').read_text(encoding='utf-8')
+          match = re.search(r'data:image/jpeg;base64,([^" ]+)', svg)
+          if not match:
+              raise SystemExit('Embedded app artwork was not found in www/icon.svg')
+          Path('/tmp/sobhati-icon.jpg').write_bytes(base64.b64decode(match.group(1)))
+          PY
+          declare -A sizes=( [mdpi]=48 [hdpi]=72 [xhdpi]=96 [xxhdpi]=144 [xxxhdpi]=192 )
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "android/app/src/main/res/mipmap-$density"
+            size=${sizes[$density]}
+            convert /tmp/sobhati-icon.jpg -resize "${size}x${size}!" "android/app/src/main/res/mipmap-$density/ic_launcher.png"
+            cp "android/app/src/main/res/mipmap-$density/ic_launcher.png" "android/app/src/main/res/mipmap-$density/ic_launcher_round.png"
+          done
+          mkdir -p android/app/src/main/res/mipmap-anydpi-v26 android/app/src/main/res/values
+          convert /tmp/sobhati-icon.jpg -resize 66%x66% -gravity center -background none -extent 432x432 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+          cp android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+          cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background" />
+              <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+          </adaptive-icon>
+          XML
+          cat > android/app/src/main/res/values/ic_launcher_background.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources><color name="ic_launcher_background">#073B2C</color></resources>
+          XML
       - name: Add location permissions
         run: |
           python3 - <<'PY'
