@@ -66,14 +66,7 @@ jobs:
           done
           mkdir -p android/app/src/main/res/drawable-nodpi android/app/src/main/res/mipmap-anydpi-v26 android/app/src/main/res/values
           convert /tmp/sobhati-icon.png -resize 66%x66% -gravity center -background none -extent 432x432 android/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png
-          cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@color/ic_launcher_background" />
-              <foreground android:drawable="@drawable/ic_launcher_foreground" />
-          </adaptive-icon>
-          XML
-          cp android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+          rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
           cat > android/app/src/main/res/values/ic_launcher_background.xml <<'XML'
           <?xml version="1.0" encoding="utf-8"?>
           <resources><color name="ic_launcher_background">#073B2C</color></resources>
@@ -90,10 +83,10 @@ jobs:
               raise SystemExit('Android application element missing')
           ns = '{http://schemas.android.com/apk/res/android}'
           app.set(ns + 'icon', '@mipmap/ic_launcher')
-          app.set(ns + 'roundIcon', '@mipmap/ic_launcher_round')
+          app.set(ns + 'roundIcon', '@mipmap/ic_launcher')
           for activity in app.findall('activity'):
               activity.set(ns + 'icon', '@mipmap/ic_launcher')
-              activity.set(ns + 'roundIcon', '@mipmap/ic_launcher_round')
+              activity.set(ns + 'roundIcon', '@mipmap/ic_launcher')
           tree.write(p, encoding='utf-8', xml_declaration=True)
           PY
       - name: Add location permissions
