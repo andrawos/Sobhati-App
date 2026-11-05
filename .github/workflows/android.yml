@@ -73,6 +73,7 @@ jobs:
               <foreground android:drawable="@drawable/ic_launcher_foreground" />
           </adaptive-icon>
           XML
+          cp android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
           cat > android/app/src/main/res/values/ic_launcher_background.xml <<'XML'
           <?xml version="1.0" encoding="utf-8"?>
           <resources><color name="ic_launcher_background">#073B2C</color></resources>
@@ -90,6 +91,9 @@ jobs:
           ns = '{http://schemas.android.com/apk/res/android}'
           app.set(ns + 'icon', '@mipmap/ic_launcher')
           app.set(ns + 'roundIcon', '@mipmap/ic_launcher_round')
+          for activity in app.findall('activity'):
+              activity.set(ns + 'icon', '@mipmap/ic_launcher')
+              activity.set(ns + 'roundIcon', '@mipmap/ic_launcher_round')
           tree.write(p, encoding='utf-8', xml_declaration=True)
           PY
       - name: Add location permissions
