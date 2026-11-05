@@ -4,14 +4,16 @@
   "private": true,
   "description": "Sobhati Islamic companion app",
   "scripts": {
-    "build": "echo Web app ready",
+    "build": "esbuild www/notifications.js --bundle --format=iife --outfile=www/notifications.bundle.js",
     "android": "npx cap sync android"
   },
   "dependencies": {
     "@capacitor/core": "^7.0.0",
-    "@capacitor/android": "^7.0.0"
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/local-notifications": "^7.0.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.0.0"
+    "@capacitor/cli": "^7.0.0",
+    "esbuild": "^0.24.2"
   }
 }
