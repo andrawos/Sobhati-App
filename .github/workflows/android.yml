@@ -36,6 +36,16 @@ jobs:
         run: npm install
       - name: Build web assets
         run: npm run build
+      - name: Check inline JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path('www/index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\\s[^>]*)?>(.*?)</script>', html, re.S)
+          Path('/tmp/sobhati-inline.js').write_text('\\n'.join(scripts), encoding='utf-8')
+          PY
+          node --check /tmp/sobhati-inline.js
       - name: Generate Android project
         run: npx cap add android
       - name: Sync web app
