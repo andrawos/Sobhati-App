@@ -44,7 +44,10 @@ const hadiths=[
 ['الطهور شطر الإيمان.','صحيح مسلم (223)','صحيح'],
 ['الدين النصيحة.','صحيح مسلم (55)','صحيح'],
 ['من سلك طريقاً يلتمس فيه علماً سهل الله له به طريقاً إلى الجنة.','صحيح مسلم (2699)','صحيح'],
-['تبسمك في وجه أخيك لك صدقة.','جامع الترمذي (1956)؛ قال الترمذي: حسن غريب','حسن']
+['تبسمك في وجه أخيك لك صدقة.','جامع الترمذي (1956)؛ قال الترمذي: حسن غريب','حسن'],
+['لا تغضب.','صحيح البخاري (6116)','صحيح'],
+['أحب الأعمال إلى الله أدومها وإن قل.','صحيح البخاري (6464)','صحيح'],
+['إن الله لا ينظر إلى صوركم وأموالكم، ولكن ينظر إلى قلوبكم وأعمالكم.','سنن ابن ماجه (4143)؛ صححه الألباني وصححه دار السلام','صحيح']
 ];
 function renderHadith(){const h=hadiths[hadithIndex];$('hadithText').textContent='«'+h[0]+'»';$('hadithSource').textContent=h[1]+' • الدرجة: '+h[2];$('hadithNum').textContent=(hadithIndex+1)+' / '+hadiths.length}
 function nextHadith(){hadithIndex=(hadithIndex+1)%hadiths.length;renderHadith()}function prevHadith(){hadithIndex=(hadithIndex-1+hadiths.length)%hadiths.length;renderHadith()}
