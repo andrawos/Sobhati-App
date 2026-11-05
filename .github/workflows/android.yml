@@ -50,6 +50,8 @@ jobs:
         run: npx cap add android
       - name: Sync web app
         run: npx cap sync android
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
       - name: Apply approved launcher icon
         run: |
           python3 - <<'PY'
@@ -69,13 +71,13 @@ jobs:
             cp "android/app/src/main/res/mipmap-$density/ic_launcher.png" "android/app/src/main/res/mipmap-$density/ic_launcher_round.png"
           done
           mkdir -p android/app/src/main/res/mipmap-anydpi-v26 android/app/src/main/res/values
-          convert /tmp/sobhati-icon.jpg -resize 66%x66% -gravity center -background none -extent 432x432 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
-          cp android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+          mkdir -p android/app/src/main/res/drawable-nodpi
+          convert /tmp/sobhati-icon.jpg -resize 66%x66% -gravity center -background none -extent 432x432 android/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png
           cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'XML'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
               <background android:drawable="@color/ic_launcher_background" />
-              <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+              <foreground android:drawable="@drawable/ic_launcher_foreground" />
           </adaptive-icon>
           XML
           cat > android/app/src/main/res/values/ic_launcher_background.xml <<'XML'
